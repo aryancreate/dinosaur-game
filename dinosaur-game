@@ -1,0 +1,118 @@
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+
+public class DinosaurGame extends JPanel implements KeyListener {
+
+    private final int WIDTH = 600;
+    private final int HEIGHT = 400;
+    private final int GROUND_Y = HEIGHT - 100;
+    private final int JUMP_HEIGHT = 100;
+    private final int BARRIER_WIDTH = 50;
+    private final int BARRIER_GAP = 150;
+
+    private boolean jumping = false;
+    private boolean cheating = false;
+    private int jumpTimer = 0;
+    private int dinosaurX = 50;
+    private int dinosaurY = GROUND_Y;
+    private int barrierX = WIDTH;
+    private boolean gameOver = false;
+
+    public DinosaurGame() {
+        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        addKeyListener(this);
+        setFocusable(true);
+    }
+
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        // Draw ground
+        g.setColor(Color.GREEN);
+        g.fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y);
+
+        // Draw dinosaur
+        g.setColor(Color.BLUE);
+        if (jumping) {
+            g.drawImage(new ImageIcon("jump.png").getImage(), dinosaurX, dinosaurY, this);
+        } else {
+            g.drawImage(new ImageIcon("run.png").getImage(), dinosaurX, dinosaurY, this);
+        }
+
+        // Draw barrier
+        if (!gameOver) {
+            g.setColor(Color.RED);
+            g.fillRect(barrierX, GROUND_Y - 50, BARRIER_WIDTH, 50);
+            barrierX -= 5;
+        }
+
+        // Draw game over message
+        if (gameOver) {
+            g.setColor(Color.BLACK);
+            g.setFont(new Font("Arial", Font.BOLD, 30));
+            g.drawString("Game Over", WIDTH / 2 - 100, HEIGHT / 2);
+        }
+    }
+
+    public void update() {
+        if (jumping) {
+            jumpTimer++;
+            dinosaurY -= JUMP_HEIGHT / 20;
+            if (jumpTimer >= 20) {
+                jumping = false;
+                jumpTimer = 0;
+            }
+        } else {
+            dinosaurY = GROUND_Y;
+        }
+
+        if (!cheating) {
+            if (dinosaurX + 50 >= barrierX && dinosaurX <= barrierX + BARRIER_WIDTH && dinosaurY + 50 >= GROUND_Y - 50) {
+                gameOver = true;
+            }
+        }
+
+        if (barrierX + BARRIER_WIDTH < 0) {
+            barrierX = WIDTH;
+        }
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+            jumping = true;
+        } else if (e.getKeyCode() == KeyEvent.VK_CAPS_LOCK) {
+            cheating = !cheating;
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        // No action required
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+        if (e.getKeyChar() == 'p' && cheating) {
+            barrierX = WIDTH;
+        }
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Dinosaur Game");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(new DinosaurGame());
+        frame.pack();
+        frame.setVisible(true);
+
+        while (true) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            frame.repaint();
+        }
+    }
+}
